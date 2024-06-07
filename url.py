@@ -11,12 +11,12 @@ def get_selcuksportshd_streams(url):
         soup = BeautifulSoup(response.text, 'html.parser')
 
         # Ana sayfadaki canlı yayın linklerini bulma
-        yayin_linkleri = soup.find_all('a', class_='card-img-top')
+        yayin_linkleri = soup.find_all('a', {'data-id': True})  # data-id özelliği olan linkleri bul
 
         streams = []
         for link in yayin_linkleri:
             yayin_url = link['href']  # Yayın sayfasının URL'si
-            
+
             response = requests.get(yayin_url)
             response.raise_for_status()
 
@@ -41,7 +41,6 @@ def get_selcuksportshd_streams(url):
     except (RequestException, KeyError, AttributeError, IndexError, Exception) as e:
         print(f"Hata: {e}")
         return []
-
 
 url = "https://www.selcuksportshd1274.xyz/"  # Ana sayfa URL'si
 streams = get_selcuksportshd_streams(url)
