@@ -17,13 +17,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # Python sürümünü belirtin
+          python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install requests m3u8 beautifulsoup4 selenium
+          sudo apt-get update
+          sudo apt-get install chromium-chromedriver
 
       - name: Run script
-        run: python url.py > m3u8_streams.txt  # Çıktıları dosyaya kaydet
+        run: python script.py > m3u8_streams.txt
 
       - name: Commit changes
         uses: EndBug/add-and-commit@v9
