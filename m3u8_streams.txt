@@ -1,2 +1,1 @@
-Hata: name 'By' is not defined
 Akış bulunamadı.
