@@ -1,21 +1,23 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import m3u8
+from bs4 import BeautifulSoup
+import time
 
 def get_selcuksportshd_streams(url):
     try:
-        # Chromedriver'ı başlat (chromedriver'ın PATH'ini doğru ayarladığınızdan emin olun)
-        service = Service('chromedriver.exe')  # chromedriver'ın yolunu belirtin
-        driver = webdriver.Chrome(service=service)
+        options = Options()
+        options.add_argument("--headless=new")  # Penceresiz modda çalıştır
+        options.add_argument("--disable-gpu")   # GPU hızlandırmayı devre dışı bırak
+        options.add_argument("--no-sandbox")    # Sandbox modunu devre dışı bırak
+
+        service = ChromeService(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
         driver.get(url)
 
         # Canlı yayın linklerini bul
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a[data-id]"))
-        )
         yayin_linkleri = driver.find_elements(By.CSS_SELECTOR, "a[data-id]")
 
         streams = []
@@ -25,9 +27,7 @@ def get_selcuksportshd_streams(url):
             driver.get(yayin_url)
 
             # M3U8 URL'sini bul
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "script[src*='.m3u8']"))
-            )
+            time.sleep(5)  # Sayfanın tamamen yüklenmesi için bekleme
             m3u8_url = driver.find_element(By.CSS_SELECTOR, "script[src*='.m3u8']").get_attribute("src")
             print(f"M3U8 URL: {m3u8_url}")
 
@@ -38,7 +38,7 @@ def get_selcuksportshd_streams(url):
             else:
                 streams.append((None, m3u8_url))
 
-        driver.quit()  # Tarayıcıyı kapat
+        driver.quit()
         return streams
 
     except Exception as e:
