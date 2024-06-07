@@ -1,3 +1,2 @@
-Hata: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
-
+Hata: name 'By' is not defined
 Akış bulunamadı.
