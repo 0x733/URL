@@ -1,48 +1,54 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import m3u8
-from requests.exceptions import RequestException
-from bs4 import BeautifulSoup
 
 def get_selcuksportshd_streams(url):
     try:
-        response = requests.get(url)
-        response.raise_for_status()
+        # Chromedriver'ı başlat (chromedriver'ın PATH'ini doğru ayarladığınızdan emin olun)
+        service = Service('chromedriver.exe')  # chromedriver'ın yolunu belirtin
+        driver = webdriver.Chrome(service=service)
+        driver.get(url)
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Ana sayfadaki canlı yayın linklerini bulma
-        yayin_linkleri = soup.find_all('a', {'data-id': True})  # data-id özelliği olan linkleri bul
+        # Canlı yayın linklerini bul
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a[data-id]"))
+        )
+        yayin_linkleri = driver.find_elements(By.CSS_SELECTOR, "a[data-id]")
 
         streams = []
         for link in yayin_linkleri:
-            yayin_url = link['href']  # Yayın sayfasının URL'si
+            yayin_url = link.get_attribute("href")
 
-            response = requests.get(yayin_url)
-            response.raise_for_status()
+            driver.get(yayin_url)
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Yayın sayfasındaki M3U8 URL'sini bulma
-            m3u8_url = soup.find('script', text=lambda t: t and "var player" in t).text
-            m3u8_url = m3u8_url.split("file: '")[1].split("'")[0]
-
+            # M3U8 URL'sini bul
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "script[src*='.m3u8']"))
+            )
+            m3u8_url = driver.find_element(By.CSS_SELECTOR, "script[src*='.m3u8']").get_attribute("src")
             print(f"M3U8 URL: {m3u8_url}")
 
-            m3u8_content = requests.get(m3u8_url).text
-            playlist = m3u8.loads(m3u8_content)
+            playlist = m3u8.load(m3u8_url)
 
             if playlist.is_variant:
                 streams.extend([(playlist.playlists[i].stream_info.resolution, playlist.playlists[i].uri) for i in range(len(playlist.playlists))])
             else:
                 streams.append((None, m3u8_url))
 
+        driver.quit()  # Tarayıcıyı kapat
         return streams
 
-    except (RequestException, KeyError, AttributeError, IndexError, Exception) as e:
+    except Exception as e:
         print(f"Hata: {e}")
+        if 'driver' in locals():
+            driver.quit()
         return []
 
-url = "https://www.selcuksportshd1274.xyz/"  # Ana sayfa URL'si
+
+url = "https://www.selcuksportshd1274.xyz/"
 streams = get_selcuksportshd_streams(url)
 
 if streams:
