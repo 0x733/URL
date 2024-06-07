@@ -1,0 +1,32 @@
+name: SelcukSportsHD M3U8 Extractor
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Her 4 saatte bir çalıştır (isteğe göre ayarlanabilir)
+  push:
+    branches:
+      - main  # main branch'e push yapıldığında çalıştır (isteğe göre ayarlanabilir)
+
+jobs:
+  extract_m3u8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'  # Python sürümünü belirtin
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run script
+        run: python url.py > m3u8_streams.txt  # Çıktıları dosyaya kaydet
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'M3U8 akışları güncellendi'
+          add: 'm3u8_streams.txt'
